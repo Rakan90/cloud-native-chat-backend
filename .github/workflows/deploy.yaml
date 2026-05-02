@@ -1,0 +1,38 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # User Service
+      - name: Install User Service deps
+        run: |
+          cd user-service
+          npm install
+
+      # Message Service
+      - name: Install Message Service deps
+        run: |
+          cd message-service
+          npm install
+
+      # Build Docker images
+      - name: Build User Service Image
+        run: docker build -t user-service ./user-service
+
+      - name: Build Message Service Image
+        run: docker build -t message-service ./message-service
