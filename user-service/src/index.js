@@ -18,3 +18,11 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`User Service running on port ${PORT}`);
 });
+
+process.on("SIGTERM", () => {
+    console.log("SIGTERM received. Shutting down User Service...");
+    server.close(() => {
+        console.log("User Service shut down gracefully.");
+        process.exit(0);
+    });
+});
