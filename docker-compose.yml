@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: chat-postgres
+    environment:
+      POSTGRES_USER: chatuser
+      POSTGRES_PASSWORD: chatpass
+      POSTGRES_DB: chatdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    environment:
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: chatuser
+      DB_PASSWORD: chatpass
+      DB_NAME: chatdb
+      JWT_SECRET: mysecretkey
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+
+  message-service:
+    build: ./message-service
+    container_name: message-service
+    environment:
+      PORT: 3002
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: chatuser
+      DB_PASSWORD: chatpass
+      DB_NAME: chatdb
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
