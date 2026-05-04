@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/users");
+const { ensureSchema } = require("./db");
 
 dotenv.config();
 
@@ -15,14 +16,23 @@ app.use("/users", userRoutes);
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
     console.log(`User Service running on port ${PORT}`);
+    try {
+        await ensureSchema();
+        console.log("User Service schema ready.");
+    } catch (err) {
+        console.error("Schema bootstrap failed:", err.message);
+    }
 });
 
-process.on("SIGTERM", () => {
-    console.log("SIGTERM received. Shutting down User Service...");
+const shutdown = (signal) => {
+    console.log(`${signal} received. Shutting down User Service...`);
     server.close(() => {
         console.log("User Service shut down gracefully.");
         process.exit(0);
     });
-});
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

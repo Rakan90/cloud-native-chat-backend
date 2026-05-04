@@ -4,35 +4,83 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: chat-cluster
+  USER_SERVICE_ECR_REPO: chat-user-service
+  MESSAGE_SERVICE_ECR_REPO: chat-message-service
+  USER_SERVICE_ECS_SERVICE: chat-user-service
+  MESSAGE_SERVICE_ECS_SERVICE: chat-message-service
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          node-version: 20
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      # User Service
-      - name: Install User Service deps
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push user-service image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          cd user-service
-          npm install
+          docker build -t "$ECR_REGISTRY/$USER_SERVICE_ECR_REPO:$IMAGE_TAG" \
+                       -t "$ECR_REGISTRY/$USER_SERVICE_ECR_REPO:latest" \
+                       ./user-service
+          docker push "$ECR_REGISTRY/$USER_SERVICE_ECR_REPO:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$USER_SERVICE_ECR_REPO:latest"
 
-      # Message Service
-      - name: Install Message Service deps
+      - name: Build and push message-service image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          cd message-service
-          npm install
+          docker build -t "$ECR_REGISTRY/$MESSAGE_SERVICE_ECR_REPO:$IMAGE_TAG" \
+                       -t "$ECR_REGISTRY/$MESSAGE_SERVICE_ECR_REPO:latest" \
+                       ./message-service
+          docker push "$ECR_REGISTRY/$MESSAGE_SERVICE_ECR_REPO:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$MESSAGE_SERVICE_ECR_REPO:latest"
 
-      # Build Docker images
-      - name: Build User Service Image
-        run: docker build -t user-service ./user-service
+      - name: Force new deployment of user-service
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$USER_SERVICE_ECS_SERVICE" \
+            --force-new-deployment \
+            --no-cli-pager
 
-      - name: Build Message Service Image
-        run: docker build -t message-service ./message-service
+      - name: Force new deployment of message-service
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$MESSAGE_SERVICE_ECS_SERVICE" \
+            --force-new-deployment \
+            --no-cli-pager
+
+      - name: Wait for user-service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$USER_SERVICE_ECS_SERVICE"
+
+      - name: Wait for message-service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$MESSAGE_SERVICE_ECS_SERVICE"

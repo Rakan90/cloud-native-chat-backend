@@ -1,0 +1,22 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment
+.env
+*/.env
+!.env.example
+!*/.env.example
+
+# Terraform
+infrastructure/.terraform/
+infrastructure/.terraform.lock.hcl
+infrastructure/*.tfstate
+infrastructure/*.tfstate.*
+infrastructure/terraform.tfvars
+infrastructure/tfplan
+infrastructure/tfplan.*
+infrastructure/crash.log
+
+# OS
+.DS_Store

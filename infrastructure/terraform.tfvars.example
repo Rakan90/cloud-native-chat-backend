@@ -1,0 +1,13 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored.
+
+aws_region   = "us-east-1"
+project_name = "chat"
+
+db_username = "chatuser"
+db_name     = "chatdb"
+
+# Min 8 chars; cannot contain '/', '@', '"' or spaces.
+db_password = "ChangeMe_LongStrongPass123"
+
+jwt_secret = "ChangeMe_LongRandomJwtSigningSecret"
