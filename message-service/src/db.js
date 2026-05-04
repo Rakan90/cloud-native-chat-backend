@@ -12,17 +12,4 @@ const pool = new Pool({
     ssl: useSsl ? { rejectUnauthorized: false } : false,
 });
 
-async function ensureSchema() {
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS messages (
-            id SERIAL PRIMARY KEY,
-            sender_id INTEGER NOT NULL,
-            receiver_id INTEGER NOT NULL,
-            content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    `);
-}
-
 module.exports = pool;
-module.exports.ensureSchema = ensureSchema;

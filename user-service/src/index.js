@@ -1,7 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/users");
-const { ensureSchema } = require("./db");
+const pool = require("./db");
 
 dotenv.config();
 
@@ -19,7 +19,15 @@ const PORT = process.env.PORT || 3001;
 const server = app.listen(PORT, async () => {
     console.log(`User Service running on port ${PORT}`);
     try {
-        await ensureSchema();
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                email VARCHAR(150) UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
         console.log("User Service schema ready.");
     } catch (err) {
         console.error("Schema bootstrap failed:", err.message);

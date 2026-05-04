@@ -15,7 +15,7 @@
 Both services are stateless and horizontally scalable. They share one Postgres database but never share in-memory state.
 
 ### Data tier
-- **Amazon RDS for PostgreSQL 16** — single `db.t3.micro` instance, encrypted, in private subnets, reachable only from the ECS task security group on port 5432. Schema is bootstrapped idempotently on service startup via `ensureSchema()` in each service's `db.js`.
+- **Amazon RDS for PostgreSQL 16** — single `db.t3.micro` instance, encrypted, in private subnets, reachable only from the ECS task security group on port 5432. Schema is bootstrapped idempotently on service startup: each service's `index.js` runs its own `CREATE TABLE IF NOT EXISTS …` against the shared pool defined in `db.js`.
 
 ### Edge / network
 - **Application Load Balancer** in two public subnets, accepting `HTTP :80` from the internet.

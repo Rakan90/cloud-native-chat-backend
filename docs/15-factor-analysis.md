@@ -100,11 +100,11 @@ The application does not know or care where logs end up — that is a deployment
 
 ## 12. Run admin/management tasks as one-off processes
 
-Schema bootstrap is performed by an idempotent admin task — `ensureSchema()` — that runs once at service startup against the same database and through the same code path the application uses.
+Schema bootstrap is performed by an idempotent admin task that runs once at service startup against the same database and through the same `pg` pool the application uses.
 
-- `user-service/src/db.js` (`ensureSchema()` runs `CREATE TABLE IF NOT EXISTS users ...`)
-- `message-service/src/db.js` (same for `messages`)
-- Invoked from `user-service/src/index.js:21-29`, `message-service/src/index.js:21-29` immediately after `app.listen`.
+- `user-service/src/index.js` runs `CREATE TABLE IF NOT EXISTS users ...` inside the `app.listen` callback, immediately after the HTTP server starts.
+- `message-service/src/index.js` does the same for the `messages` table.
+- Both services share the connection-pool factory in `*/src/db.js`.
 
 The local equivalent for first-time setup is `database/init/01-init.sql`, applied by the Postgres container's init mechanism.
 

@@ -406,13 +406,13 @@ resource "aws_iam_role" "ecs_task" {
 
 resource "aws_cloudwatch_log_group" "user_service" {
   name              = "/ecs/${local.name_prefix}/user-service"
-  retention_in_days = 7
+  retention_in_days = 30
   tags              = local.common_tags
 }
 
 resource "aws_cloudwatch_log_group" "message_service" {
   name              = "/ecs/${local.name_prefix}/message-service"
-  retention_in_days = 7
+  retention_in_days = 30
   tags              = local.common_tags
 }
 
