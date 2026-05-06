@@ -6,33 +6,31 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          node-version: 20
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # User Service
-      - name: Install User Service deps
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push User Service image
         run: |
-          cd user-service
-          npm install
+          docker build -t user-service ./user-service
+          docker tag user-service:latest ${{ secrets.USER_SERVICE_ECR_URL }}:latest
+          docker push ${{ secrets.USER_SERVICE_ECR_URL }}:latest
 
-      # Message Service
-      - name: Install Message Service deps
+      - name: Build and push Message Service image
         run: |
-          cd message-service
-          npm install
-
-      # Build Docker images
-      - name: Build User Service Image
-        run: docker build -t user-service ./user-service
-
-      - name: Build Message Service Image
-        run: docker build -t message-service ./message-service
+          docker build -t message-service ./message-service
+          docker tag message-service:latest ${{ secrets.MESSAGE_SERVICE_ECR_URL }}:latest
+          docker push ${{ secrets.MESSAGE_SERVICE_ECR_URL }}:latest
