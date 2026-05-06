@@ -1,11 +1,13 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const messageRoutes = require("./routes/messages");
+const cors = require("cors");
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.get("/health", (req, res) => {
     res.json({ status: "Message Service is running" });
